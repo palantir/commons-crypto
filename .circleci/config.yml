@@ -36,18 +36,17 @@ step_templates:
         - maven-dependency-cache-
 
 jobs:
-  build-maven:
+  run-tests:
     <<: *defaults
     steps:
       - checkout
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
       - run: sudo apt-get update && sudo apt-get install libssl-dev
-      - run: ./build/mvn -T1C -B -DskipTests install
-      - persist_to_workspace:
-          root: .
-          paths:
-            - 'target'
+      - run:
+          name: Run all tests
+          command: ./build/mvn -B test
+          no_output_timeout: 15m
       - save_cache:
           key: build-binaries-{{ checksum "build/mvn" }}
           paths:
@@ -56,21 +55,6 @@ jobs:
           key: maven-dependency-cache-{{ checksum "pom.xml" }}
           paths:
             - "~/.m2"
-
-  run-tests:
-    <<: *defaults
-    resource_class: medium
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - *restore-maven-dependency-cache
-      - *restore-build-binaries-cache
-      - run: sudo apt-get update && sudo apt-get install libssl-dev
-      - run:
-          name: Run all tests
-          command: ./build/mvn test
-          no_output_timeout: 15m
       - run:
           name: Save test results
           command: |
@@ -82,50 +66,46 @@ jobs:
       - store_artifacts:
           path: ~/junit
 
-  build-maven-versioned:
+  build-osx:
     <<: *defaults
+    macos:
+      xcode: "9.0.1"
     steps:
       - checkout
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
-      - run: sudo apt-get update && sudo apt-get install libssl-dev
-      - run:
-          command: dev/set_version_and_package.sh
+      - run: ./build/mvn process-classess
       - persist_to_workspace:
-          root: .
+          root: target/classes/org/apache/commons/crypto/native/Mac/
           paths:
             - '*'
 
   deploy:
     <<: *defaults
     steps:
+      - checkout
       - attach_workspace:
-          at: .
+          at: target/classes/org/apache/commons/crypto/native/Mac/
       - *restore-maven-dependency-cache
+      - *restore-build-binaries-cache
       - run: echo "<settings><servers><server>" > settings.xml
       - run: echo "<id>bintray-palantir-release</id><username>$BINTRAY_USERNAME</username>" >> settings.xml
       - run: echo "<password>$BINTRAY_PASSWORD</password>" >> settings.xml
       - run: echo "</server></servers></settings>" >> settings.xml
       - deploy:
           name: Deploy all the things
-          command: ./build/mvn -T1C --settings settings.xml -DskipTests deploy
+          command: ./build/mvn versions:set -DnewVersion=`git describe --tags --first-parent` && ./build/mvn -T1C --settings settings.xml -DskipTests deploy
 
 workflows:
   version: 2
   build-test-deploy:
     jobs:
-      - build-maven:
-          <<: *all-branches-and-tags
       - run-tests:
-          requires:
-            - build-maven
           <<: *all-branches-and-tags
-      - build-maven-versioned:
-          requires:
-            - build-maven
+      - build-osx:
           <<: *deployable-branches-and-tags
       - deploy:
           requires:
             - run-tests
-            - build-maven-versioned
+            - build-osx
           <<: *deployable-branches-and-tags
