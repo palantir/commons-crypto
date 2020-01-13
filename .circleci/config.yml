@@ -71,7 +71,7 @@ jobs:
       xcode: "11.1.0"
     environment:
       TERM: dumb
-      JAVA_HOME: $(/usr/libexec/java_home -v 1.8)
+      JAVA_HOME: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
     steps:
       - checkout
       - run: ./build/mvn process-classes
