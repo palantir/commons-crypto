@@ -74,8 +74,6 @@ jobs:
       JAVA_HOME: /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
     steps:
       - checkout
-      - *restore-maven-dependency-cache
-      - *restore-build-binaries-cache
       - run: ./build/mvn -B process-classes
       - persist_to_workspace:
           root: target/classes/org/apache/commons/crypto/native/Mac/
