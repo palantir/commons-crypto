@@ -104,9 +104,9 @@ workflows:
       - run-tests:
           <<: *all-branches-and-tags
       - build-osx:
-          <<: *all-branches-and-tags
+          <<: *deployable-branches-and-tags
       - deploy:
           requires:
             - run-tests
             - build-osx
-          <<: *all-branches-and-tags
+          <<: *deployable-branches-and-tags
