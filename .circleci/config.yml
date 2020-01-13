@@ -67,14 +67,15 @@ jobs:
           path: ~/junit
 
   build-osx:
-    <<: *defaults
     macos:
       xcode: "9.0.1"
+    environment:
+      TERM: dumb
     steps:
       - checkout
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
-      - run: ./build/mvn process-classess
+      - run: ./build/mvn process-classes
       - persist_to_workspace:
           root: target/classes/org/apache/commons/crypto/native/Mac/
           paths:
@@ -94,7 +95,7 @@ jobs:
       - run: echo "</server></servers></settings>" >> settings.xml
       - deploy:
           name: Deploy all the things
-          command: ./build/mvn versions:set -DnewVersion=`git describe --tags --first-parent` && ./build/mvn -T1C --settings settings.xml -DskipTests deploy
+          command: ./build/mvn versions:set -DnewVersion=`git describe --tags --first-parent` && ./build/mvn -T1C --settings settings.xml -DskipTests install
 
 workflows:
   version: 2
@@ -103,9 +104,9 @@ workflows:
       - run-tests:
           <<: *all-branches-and-tags
       - build-osx:
-          <<: *deployable-branches-and-tags
+          <<: *all-branches-and-tags
       - deploy:
           requires:
             - run-tests
             - build-osx
-          <<: *deployable-branches-and-tags
+          <<: *all-branches-and-tags
