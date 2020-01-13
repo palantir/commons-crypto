@@ -42,6 +42,7 @@ jobs:
       - checkout
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
+      - run: sudo apt-get update && sudo apt-get install libssl-dev
       - run: ./build/mvn -T1C -B -DskipTests install
       - persist_to_workspace:
           root: .
@@ -65,6 +66,7 @@ jobs:
           at: .
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
+      - run: sudo apt-get update && sudo apt-get install libssl-dev
       - run:
           name: Run all tests
           command: ./build/mvn test
@@ -86,6 +88,7 @@ jobs:
       - checkout
       - *restore-maven-dependency-cache
       - *restore-build-binaries-cache
+      - run: sudo apt-get update && sudo apt-get install libssl-dev
       - run:
           command: dev/set_version_and_package.sh
       - persist_to_workspace:
