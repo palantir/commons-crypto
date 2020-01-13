@@ -102,11 +102,11 @@ The following provides more details on the included cryptographic software:
   </ciManagement>
 
   <distributionManagement>
-    <site>
-      <id>commons.site</id>
-      <name>Apache Commons Site SVN</name>
-      <url>scm:svn:${commons.scmPubUrl}</url>
-    </site>
+    <repository>
+      <id>bintray-palantir-release</id>
+      <name>Palantir Bintray</name>
+      <url>https://api.bintray.com/maven/palantir/releases/commons-crypto/;publish=1</url>
+    </repository>
   </distributionManagement>
 
   <properties>
@@ -151,6 +151,7 @@ The following provides more details on the included cryptographic software:
 
     <!-- Override default buildNumber timestamp format, needed for coveralls plugin -->
     <maven.buildNumber.timestampFormat>{0,date,yyyy-MM-dd HH:mm:ssZ}</maven.buildNumber.timestampFormat>
+    <maven.version>3.6.3</maven.version>
   </properties>
 
   <developers>
