@@ -71,6 +71,7 @@ jobs:
       xcode: "9.0.1"
     environment:
       TERM: dumb
+      JAVA_HOME: $(/usr/libexec/java_home -v 1.8)
     steps:
       - checkout
       - run: ./build/mvn process-classes
