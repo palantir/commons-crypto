@@ -95,7 +95,7 @@ jobs:
       - run: echo "</server></servers></settings>" >> settings.xml
       - deploy:
           name: Deploy all the things
-          command: ./build/mvn versions:set -DnewVersion=`git describe --tags --first-parent` && ./build/mvn -T1C --settings settings.xml -DskipTests install
+          command: ./build/mvn versions:set -DnewVersion=`git describe --tags --first-parent` && ./build/mvn -T1C --settings settings.xml -DskipTests deploy
 
 workflows:
   version: 2
