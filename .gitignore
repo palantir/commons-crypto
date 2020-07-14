@@ -31,7 +31,9 @@ checkpoint
 derby.log
 dist/
 unit-tests.log
+settings.xml
 src/main/resources/com/intel/chimera/native/
 src/main/resources/com/intel/chimera/native/*
 .externalToolBuilders/*
 maven-eclipse.xml
+build/**/
