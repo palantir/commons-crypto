@@ -24,6 +24,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
@@ -36,7 +37,6 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.apache.commons.crypto.cipher.CryptoCipher;
 import org.apache.commons.crypto.cipher.CryptoCipherFactory;
-import org.apache.commons.crypto.utils.Utils;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.PointerByReference;
@@ -51,6 +51,7 @@ class OpenSslJnaCipher implements CryptoCipher {
     private final AlgorithmMode algMode;
     private final int padding;
     private final String transformation;
+    private final int IV_LENGTH = 16;
 
     /**
      * Constructs a {@link CryptoCipher} using JNA into OpenSSL
@@ -59,13 +60,13 @@ class OpenSslJnaCipher implements CryptoCipher {
      * @param transformation transformation for OpenSSL cipher
      * @throws GeneralSecurityException if OpenSSL cipher initialize failed
      */
-    public OpenSslJnaCipher(Properties props, String transformation) // NOPMD
+    public OpenSslJnaCipher(final Properties props, final String transformation) // NOPMD
             throws GeneralSecurityException {
         if (!OpenSslJna.isEnabled()) {
             throw new GeneralSecurityException("Could not enable JNA access", OpenSslJna.initialisationError());
         }
         this.transformation = transformation;
-        Transform transform = tokenizeTransformation(transformation);
+        final Transform transform = tokenizeTransformation(transformation);
         algMode = AlgorithmMode.get(transform.algorithm, transform.mode);
 
         if(algMode != AlgorithmMode.AES_CBC && algMode != AlgorithmMode.AES_CTR) {
@@ -87,10 +88,10 @@ class OpenSslJnaCipher implements CryptoCipher {
      * @throws InvalidAlgorithmParameterException if IV length is wrong
      */
     @Override
-    public void init(int mode, Key key, AlgorithmParameterSpec params)
+    public void init(final int mode, final Key key, final AlgorithmParameterSpec params)
             throws InvalidKeyException, InvalidAlgorithmParameterException {
-        Utils.checkNotNull(key);
-        Utils.checkNotNull(params);
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(params, "params");
         int cipherMode = OpenSslNativeJna.OOSL_JNA_DECRYPT_MODE;
         if (mode == Cipher.ENCRYPT_MODE) {
             cipherMode = OpenSslNativeJna.OOSL_JNA_ENCRYPT_MODE;
@@ -104,7 +105,13 @@ class OpenSslJnaCipher implements CryptoCipher {
             throw new InvalidAlgorithmParameterException("Illegal parameters");
         }
 
-       if(algMode == AlgorithmMode.AES_CBC) {
+        if ((algMode == AlgorithmMode.AES_CBC ||
+             algMode == AlgorithmMode.AES_CTR)
+            && iv.length != IV_LENGTH) {
+            throw new InvalidAlgorithmParameterException("Wrong IV length: must be 16 bytes long");
+        }
+
+        if(algMode == AlgorithmMode.AES_CBC) {
             switch (key.getEncoded().length) {
                 case 16: algo = OpenSslNativeJna.EVP_aes_128_cbc(); break;
                 case 24: algo = OpenSslNativeJna.EVP_aes_192_cbc(); break;
@@ -123,7 +130,7 @@ class OpenSslJnaCipher implements CryptoCipher {
             }
         }
 
-        int retVal = OpenSslNativeJna.EVP_CipherInit_ex(context, algo, null, key.getEncoded(), iv, cipherMode);
+        final int retVal = OpenSslNativeJna.EVP_CipherInit_ex(context, algo, null, key.getEncoded(), iv, cipherMode);
         throwOnError(retVal);
         OpenSslNativeJna.EVP_CIPHER_CTX_set_padding(context, padding);
     }
@@ -139,12 +146,12 @@ class OpenSslJnaCipher implements CryptoCipher {
      *         buffer
      */
     @Override
-    public int update(ByteBuffer inBuffer, ByteBuffer outBuffer)
+    public int update(final ByteBuffer inBuffer, final ByteBuffer outBuffer)
             throws ShortBufferException {
-        int[] outlen = new int[1];
-        int retVal = OpenSslNativeJna.EVP_CipherUpdate(context, outBuffer, outlen, inBuffer, inBuffer.remaining());
+        final int[] outlen = new int[1];
+        final int retVal = OpenSslNativeJna.EVP_CipherUpdate(context, outBuffer, outlen, inBuffer, inBuffer.remaining());
         throwOnError(retVal);
-        int len = outlen[0];
+        final int len = outlen[0];
         inBuffer.position(inBuffer.limit());
         outBuffer.position(outBuffer.position() + len);
         return len;
@@ -164,10 +171,10 @@ class OpenSslJnaCipher implements CryptoCipher {
      *         byte array
      */
     @Override
-    public int update(byte[] input, int inputOffset, int inputLen,
-            byte[] output, int outputOffset) throws ShortBufferException {
-        ByteBuffer outputBuf = ByteBuffer.wrap(output, outputOffset, output.length - outputOffset);
-        ByteBuffer inputBuf = ByteBuffer.wrap(input, inputOffset, inputLen);
+    public int update(final byte[] input, final int inputOffset, final int inputLen,
+            final byte[] output, final int outputOffset) throws ShortBufferException {
+        final ByteBuffer outputBuf = ByteBuffer.wrap(output, outputOffset, output.length - outputOffset);
+        final ByteBuffer inputBuf = ByteBuffer.wrap(input, inputOffset, inputLen);
         return update(inputBuf, outputBuf);
     }
     /**
@@ -190,14 +197,14 @@ class OpenSslJnaCipher implements CryptoCipher {
      *         hold the result
      */
     @Override
-    public int doFinal(ByteBuffer inBuffer, ByteBuffer outBuffer)
+    public int doFinal(final ByteBuffer inBuffer, final ByteBuffer outBuffer)
             throws ShortBufferException, IllegalBlockSizeException,
             BadPaddingException {
-        int uptLen = update(inBuffer, outBuffer);
-        int[] outlen = new int[1];
-        int retVal = OpenSslNativeJna.EVP_CipherFinal_ex(context, outBuffer, outlen);
+        final int uptLen = update(inBuffer, outBuffer);
+        final int[] outlen = new int[1];
+        final int retVal = OpenSslNativeJna.EVP_CipherFinal_ex(context, outBuffer, outlen);
         throwOnError(retVal);
-        int len = uptLen + outlen[0];
+        final int len = uptLen + outlen[0];
         outBuffer.position(outBuffer.position() + outlen[0]);
         return len;
     }
@@ -224,11 +231,11 @@ class OpenSslJnaCipher implements CryptoCipher {
      *         to process the input data provided.
      */
     @Override
-    public int doFinal(byte[] input, int inputOffset, int inputLen,
-            byte[] output, int outputOffset) throws ShortBufferException,
+    public int doFinal(final byte[] input, final int inputOffset, final int inputLen,
+            final byte[] output, final int outputOffset) throws ShortBufferException,
             IllegalBlockSizeException, BadPaddingException {
-        ByteBuffer outputBuf = ByteBuffer.wrap(output, outputOffset, output.length-outputOffset);
-        ByteBuffer inputBuf = ByteBuffer.wrap(input, inputOffset, inputLen);
+        final ByteBuffer outputBuf = ByteBuffer.wrap(output, outputOffset, output.length-outputOffset);
+        final ByteBuffer inputBuf = ByteBuffer.wrap(input, inputOffset, inputLen);
         return doFinal(inputBuf, outputBuf);
     }
 
@@ -257,7 +264,7 @@ class OpenSslJnaCipher implements CryptoCipher {
      * doesn't support this operation.
      */
     @Override
-    public void updateAAD(byte[] aad) throws IllegalArgumentException,
+    public void updateAAD(final byte[] aad) throws IllegalArgumentException,
             IllegalStateException, UnsupportedOperationException {
         //TODO: implement GCM mode using Jna
         throw new UnsupportedOperationException("This is unsupported in Jna Cipher");
@@ -286,7 +293,7 @@ class OpenSslJnaCipher implements CryptoCipher {
      * doesn't support this operation.
      */
     @Override
-    public void updateAAD(ByteBuffer aad) throws IllegalArgumentException,
+    public void updateAAD(final ByteBuffer aad) throws IllegalArgumentException,
             IllegalStateException, UnsupportedOperationException {
         //TODO: implement GCM mode using Jna
         throw new UnsupportedOperationException("This is unsupported in Jna Cipher");
@@ -311,10 +318,10 @@ class OpenSslJnaCipher implements CryptoCipher {
     /**
      * @param retVal the result value of error.
      */
-    private void throwOnError(int retVal) {
+    private void throwOnError(final int retVal) {
         if (retVal != 1) {
-            NativeLong err = OpenSslNativeJna.ERR_peek_error();
-            String errdesc = OpenSslNativeJna.ERR_error_string(err, null);
+            final NativeLong err = OpenSslNativeJna.ERR_peek_error();
+            final String errdesc = OpenSslNativeJna.ERR_error_string(err, null);
 
             if (context != null) {
                 OpenSslNativeJna.EVP_CIPHER_CTX_cleanup(context);
@@ -336,7 +343,7 @@ class OpenSslJnaCipher implements CryptoCipher {
          * @param mode the mode name
          * @param padding the padding name
          */
-        public Transform(String algorithm, String mode, String padding) {
+        public Transform(final String algorithm, final String mode, final String padding) {
             this.algorithm = algorithm;
             this.mode = mode;
             this.padding = padding;
@@ -349,7 +356,7 @@ class OpenSslJnaCipher implements CryptoCipher {
      * @return the Transform
      * @throws NoSuchAlgorithmException if the algorithm is not supported
      */
-    private static Transform tokenizeTransformation(String transformation)
+    private static Transform tokenizeTransformation(final String transformation)
             throws NoSuchAlgorithmException {
         if (transformation == null) {
             throw new NoSuchAlgorithmException("No transformation given.");
@@ -360,9 +367,9 @@ class OpenSslJnaCipher implements CryptoCipher {
          * algorithm (e.g., AES) index 1: mode (e.g., CTR) index 2: padding
          * (e.g., NoPadding)
          */
-        String[] parts = new String[3];
+        final String[] parts = new String[3];
         int count = 0;
-        StringTokenizer parser = new StringTokenizer(transformation, "/");
+        final StringTokenizer parser = new StringTokenizer(transformation, "/");
         while (parser.hasMoreTokens() && count < 3) {
             parts[count++] = parser.nextToken().trim();
         }
@@ -376,7 +383,7 @@ class OpenSslJnaCipher implements CryptoCipher {
     /**
      * AlgorithmMode of JNA.  Currently only support AES/CTR/NoPadding.
      */
-    private static enum AlgorithmMode {
+    private enum AlgorithmMode {
         AES_CTR, AES_CBC;
 
         /**
@@ -386,10 +393,10 @@ class OpenSslJnaCipher implements CryptoCipher {
          * @return the AlgorithmMode instance
          * @throws NoSuchAlgorithmException if the algorithm is not support
          */
-        static AlgorithmMode get(String algorithm, String mode) throws NoSuchAlgorithmException {
+        static AlgorithmMode get(final String algorithm, final String mode) throws NoSuchAlgorithmException {
             try {
                 return AlgorithmMode.valueOf(algorithm + "_" + mode);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new NoSuchAlgorithmException("Doesn't support algorithm: " + algorithm + " and mode: " + mode);
             }
         }
@@ -398,7 +405,7 @@ class OpenSslJnaCipher implements CryptoCipher {
     /**
      * Padding of JNA.
      */
-    private static enum Padding {
+    private enum Padding {
         NoPadding, PKCS5Padding;
 
         /**
@@ -408,10 +415,10 @@ class OpenSslJnaCipher implements CryptoCipher {
          * @return the AlgorithmMode instance
          * @throws NoSuchPaddingException if the algorithm is not support
          */
-        static int get(String padding) throws NoSuchPaddingException {
+        static int get(final String padding) throws NoSuchPaddingException {
             try {
                 return Padding.valueOf(padding).ordinal();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new NoSuchPaddingException("Doesn't support padding: " + padding);
             }
         }

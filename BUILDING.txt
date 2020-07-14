@@ -4,19 +4,35 @@ Build instructions for Apache Commons Crypto
 Requirements:
 
 * Unix System (Linux or Mac), or Windows with MinGW
-* JDK 1.7 or above (environment variable JAVA_HOME must be set)
+* JDK 8 or above (environment variable JAVA_HOME must be set)
 * Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy
   Files (if running unit tests)
+* export JAVA_HOME
 * Maven 3.0 or above
 * Make
-* OpenSSL devel 1.0.1c or above (Openssl library header files are required)
+* OpenSSL devel 1.1.1 or above (OpenSSL library header files are required)
+* GCC
+* G++
+
+Profile win64 on Ubuntu 64-bit:
+apt-get install mingw-w64
+
+apt install x86_64-w64-mingw32-gcc
+
+Profile win32 on Ubuntu 64-bit:
+apt install gcc-mingw-w64-i686
+
+Profile linux32 on Ubuntu 64-bit:
+dpkg --add-architecture i386
+apt-get update
+apt-get install libssl-dev:i386
+sudo apt-get install g++-multilib
 
 ----------------------------------------------------------------------------------
 Install JCE Unlimited Strength Jurisdiction Policy Files:
 
 Download the Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files from Oracle:
 
-For JDK 1.7: http://www.oracle.com/technetwork/java/javase/downloads/jce-7-download-432124.html
 For JDK 1.8: http://www.oracle.com/technetwork/java/javase/downloads/jce8-download-2133166.html
 
 Install JCE Unlimited Strength Jurisdiction Policy Files to JDK:
@@ -40,6 +56,10 @@ Upgrade OpenSSL in Mac:
 
   $ brew install homebrew/versions/openssl101
   $ brew link openssl --force
+
+Get OpenSSL headers: sudo apt -y install libssl-dev
+
+Cross compile to 32-bit from Linux 64-bit: sudo apt-get install gcc-multilib
 
 ----------------------------------------------------------------------------------
 Maven build goals:

@@ -17,13 +17,14 @@
  */
 package org.apache.commons.crypto.cipher;
 
+import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.spec.AlgorithmParameterSpec;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
 import javax.crypto.spec.IvParameterSpec;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * This class do the real work(Encryption/Decryption) for non-authenticated modes, such as CTR, CBC.
@@ -32,12 +33,12 @@ import java.security.spec.AlgorithmParameterSpec;
  */
 class OpenSslCommonMode extends OpenSslFeedbackCipher {
 
-    OpenSslCommonMode(long context, int algorithmMode, int padding) {
+    OpenSslCommonMode(final long context, final int algorithmMode, final int padding) {
         super(context, algorithmMode, padding);
     }
 
     @Override
-    public void init(int mode, byte[] key, AlgorithmParameterSpec params)
+    public void init(final int mode, final byte[] key, final AlgorithmParameterSpec params)
             throws InvalidAlgorithmParameterException {
         this.cipherMode = mode;
         byte[] iv;
@@ -51,10 +52,10 @@ class OpenSslCommonMode extends OpenSslFeedbackCipher {
     }
 
     @Override
-    public int update(ByteBuffer input, ByteBuffer output) throws ShortBufferException {
+    public int update(final ByteBuffer input, final ByteBuffer output) throws ShortBufferException {
         checkState();
 
-        int len = OpenSslNative.update(context, input, input.position(),
+        final int len = OpenSslNative.update(context, input, input.position(),
                 input.remaining(), output, output.position(),
                 output.remaining());
         input.position(input.limit());
@@ -64,7 +65,7 @@ class OpenSslCommonMode extends OpenSslFeedbackCipher {
     }
 
     @Override
-    public int update(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
+    public int update(final byte[] input, final int inputOffset, final int inputLen, final byte[] output, final int outputOffset)
             throws ShortBufferException {
         checkState();
 
@@ -73,7 +74,7 @@ class OpenSslCommonMode extends OpenSslFeedbackCipher {
     }
 
     @Override
-    public int doFinal(byte[] input, int inputOffset, int inputLen, byte[] output, int outputOffset)
+    public int doFinal(final byte[] input, final int inputOffset, final int inputLen, final byte[] output, final int outputOffset)
             throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
         checkState();
 
@@ -87,7 +88,7 @@ class OpenSslCommonMode extends OpenSslFeedbackCipher {
     }
 
     @Override
-    public int doFinal(ByteBuffer input, ByteBuffer output)
+    public int doFinal(final ByteBuffer input, final ByteBuffer output)
             throws ShortBufferException, IllegalBlockSizeException, BadPaddingException {
         checkState();
 
@@ -109,7 +110,7 @@ class OpenSslCommonMode extends OpenSslFeedbackCipher {
     }
 
     @Override
-    public void updateAAD(byte[] aad) {
+    public void updateAAD(final byte[] aad) {
         throw new UnsupportedOperationException(
                 "The underlying Cipher implementation "
                         + "does not support this method");

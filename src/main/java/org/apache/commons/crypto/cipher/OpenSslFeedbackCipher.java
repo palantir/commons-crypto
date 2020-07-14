@@ -17,14 +17,15 @@
  */
 package org.apache.commons.crypto.cipher;
 
-import org.apache.commons.crypto.utils.Utils;
+import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.spec.AlgorithmParameterSpec;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
-import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.spec.AlgorithmParameterSpec;
+
+import org.apache.commons.crypto.utils.Utils;
 
 /**
  * This class represents a block cipher in one of its modes.
@@ -37,7 +38,7 @@ abstract class OpenSslFeedbackCipher {
 
     protected int cipherMode = OpenSsl.DECRYPT_MODE;
 
-    OpenSslFeedbackCipher(long context, int algorithmMode, int padding) {
+    OpenSslFeedbackCipher(final long context, final int algorithmMode, final int padding) {
         this.context = context;
         this.algorithmMode = algorithmMode;
         this.padding = padding;
