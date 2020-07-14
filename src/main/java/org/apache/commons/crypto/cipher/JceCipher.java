@@ -23,14 +23,13 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.ShortBufferException;
-
-import org.apache.commons.crypto.utils.Utils;
 
 /**
  * Implements the {@link CryptoCipher} using JCE provider.
@@ -47,7 +46,7 @@ class JceCipher implements CryptoCipher {
      */
     // N.B. this class is not public/protected so does not appear in the main Javadoc
     // Please ensure that property use is documented in the enum CryptoRandomFactory.RandomProvider
-    public JceCipher(Properties props, String transformation)
+    public JceCipher(final Properties props, final String transformation)
             throws GeneralSecurityException {
         final String provider = props.getProperty(CryptoCipherFactory.JCE_PROVIDER_KEY);
         if (provider == null || provider.isEmpty()) {
@@ -96,10 +95,10 @@ class JceCipher implements CryptoCipher {
      *         configured jurisdiction policy files).
      */
     @Override
-    public void init(int mode, Key key, AlgorithmParameterSpec params)
+    public void init(final int mode, final Key key, final AlgorithmParameterSpec params)
             throws InvalidKeyException, InvalidAlgorithmParameterException {
-        Utils.checkNotNull(key);
-        Utils.checkNotNull(params);
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(params, "params");
 
         // Jce uses the javax.crypto.Cipher modes; no need to convert the input
         cipher.init(mode, key, params);
@@ -116,7 +115,7 @@ class JceCipher implements CryptoCipher {
      *         buffer
      */
     @Override
-    public int update(ByteBuffer inBuffer, ByteBuffer outBuffer)
+    public int update(final ByteBuffer inBuffer, final ByteBuffer outBuffer)
             throws ShortBufferException {
         return cipher.update(inBuffer, outBuffer);
     }
@@ -135,8 +134,8 @@ class JceCipher implements CryptoCipher {
      *         byte array
      */
     @Override
-    public int update(byte[] input, int inputOffset, int inputLen,
-            byte[] output, int outputOffset) throws ShortBufferException {
+    public int update(final byte[] input, final int inputOffset, final int inputLen,
+            final byte[] output, final int outputOffset) throws ShortBufferException {
         return cipher
                 .update(input, inputOffset, inputLen, output, outputOffset);
     }
@@ -161,7 +160,7 @@ class JceCipher implements CryptoCipher {
      *         hold the result
      */
     @Override
-    public int doFinal(ByteBuffer inBuffer, ByteBuffer outBuffer)
+    public int doFinal(final ByteBuffer inBuffer, final ByteBuffer outBuffer)
             throws ShortBufferException, IllegalBlockSizeException,
             BadPaddingException {
         return cipher.doFinal(inBuffer, outBuffer);
@@ -189,8 +188,8 @@ class JceCipher implements CryptoCipher {
      *         to process the input data provided.
      */
     @Override
-    public int doFinal(byte[] input, int inputOffset, int inputLen,
-            byte[] output, int outputOffset) throws ShortBufferException,
+    public int doFinal(final byte[] input, final int inputOffset, final int inputLen,
+            final byte[] output, final int outputOffset) throws ShortBufferException,
             IllegalBlockSizeException, BadPaddingException {
         return cipher.doFinal(input, inputOffset, inputLen, output,
                 outputOffset);
@@ -220,7 +219,7 @@ class JceCipher implements CryptoCipher {
      * support such operation
      */
     @Override
-    public void updateAAD(byte[] aad) {
+    public void updateAAD(final byte[] aad) {
         cipher.updateAAD(aad);
     }
 
@@ -247,7 +246,7 @@ class JceCipher implements CryptoCipher {
      * support such operation
      */
     @Override
-    public void updateAAD(ByteBuffer aad) {
+    public void updateAAD(final ByteBuffer aad) {
         cipher.updateAAD(aad);
     }
 

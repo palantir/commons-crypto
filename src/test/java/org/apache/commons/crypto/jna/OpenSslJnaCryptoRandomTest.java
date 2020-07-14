@@ -17,17 +17,16 @@
  */
 package org.apache.commons.crypto.jna;
 
+import static org.junit.Assert.assertTrue;
+
 import java.security.GeneralSecurityException;
 import java.util.Properties;
 
-import org.apache.commons.crypto.jna.OpenSslJnaCryptoRandom;
 import org.apache.commons.crypto.random.AbstractRandomTest;
 import org.apache.commons.crypto.random.CryptoRandom;
 import org.apache.commons.crypto.random.CryptoRandomFactory;
 import org.junit.Assume;
 import org.junit.Before;
-
-import static org.junit.Assert.assertTrue;
 
 public class OpenSslJnaCryptoRandomTest extends AbstractRandomTest {
 
@@ -38,11 +37,11 @@ public class OpenSslJnaCryptoRandomTest extends AbstractRandomTest {
 
     @Override
     public CryptoRandom getCryptoRandom() throws GeneralSecurityException {
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.setProperty(
                 CryptoRandomFactory.CLASSES_KEY,
                 OpenSslJnaCryptoRandom.class.getName());
-        CryptoRandom random = CryptoRandomFactory.getCryptoRandom(props);
+        final CryptoRandom random = CryptoRandomFactory.getCryptoRandom(props);
         assertTrue(
                 "The CryptoRandom should be: " + OpenSslJnaCryptoRandom.class.getName(),
                 random instanceof OpenSslJnaCryptoRandom);
